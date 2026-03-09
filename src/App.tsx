@@ -4,6 +4,7 @@ import {
   ZoneCard,
   DotNavigation,
   PoweredByFever,
+  TabButton,
   colors,
   fonts,
   formatPrice,
@@ -471,6 +472,20 @@ export default function App() {
   const [selectedZone, setSelectedZone] = useState(ENTRY_ZONES[0].id);
   const [quantities, setQuantities] = useState<Record<string, number>>(initialQuantities);
   const selectorRef = useRef<HTMLDivElement>(null);
+  
+  // Refs for scrolling
+  const entryRef = useRef<HTMLElement>(null);
+  const campingRef = useRef<HTMLElement>(null);
+  const fbRef = useRef<HTMLElement>(null);
+  const [activeTab, setActiveTab] = useState('entry');
+
+  const scrollToSection = (ref: React.RefObject<HTMLElement | null>, tabId: string) => {
+    setActiveTab(tabId);
+    if (ref.current) {
+      const top = ref.current.getBoundingClientRect().top + window.scrollY - 100;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+  };
 
   const totalPrice = ALL_ZONES.reduce((sum, z) => sum + z.price * (quantities[z.id] ?? 0), 0);
 
@@ -497,6 +512,29 @@ export default function App() {
       <main className="pt-[62px] pb-[80px] lg:pb-0 min-h-screen">
         <HeroSection />
         
+        {/* Category Tabs */}
+        <div className="sticky top-[62px] z-40 bg-white border-b border-gray-200 shadow-sm" style={{ borderColor: colors.border }}>
+          <div className="max-w-[1280px] mx-auto px-[16px] md:px-[32px] py-[16px]">
+            <div className="flex gap-[12px] overflow-x-auto scrollbar-hide">
+              <TabButton 
+                label="Entry ticket" 
+                isActive={activeTab === 'entry'} 
+                onClick={() => scrollToSection(entryRef, 'entry')} 
+              />
+              <TabButton 
+                label="Camping" 
+                isActive={activeTab === 'camping'} 
+                onClick={() => scrollToSection(campingRef, 'camping')} 
+              />
+              <TabButton 
+                label="Food & Beverage" 
+                isActive={activeTab === 'fb'} 
+                onClick={() => scrollToSection(fbRef, 'fb')} 
+              />
+            </div>
+          </div>
+        </div>
+
         <div className="max-w-[1280px] mx-auto px-[16px] md:px-[32px] py-[32px]">
           <p style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '8px' }}>
             Local: fever-festival-ticket-cards — selector has +/− and quantity on each row.
@@ -504,7 +542,7 @@ export default function App() {
           <div className="flex flex-col lg:flex-row gap-[32px] lg:items-start">
             <div className="flex-1 min-w-0 overflow-hidden">
               {/* Row 1: Entry ticket */}
-              <section aria-label="Entry ticket options" className="mb-8">
+              <section ref={entryRef} aria-label="Entry ticket options" className="mb-8 scroll-mt-[150px]">
                 <ZoneCarouselRow
                   title="Entry ticket"
                   description="Escolhe o dia que preferes ou compra um passe para todo o festival."
@@ -517,7 +555,7 @@ export default function App() {
               </section>
 
               {/* Row 2: Camping – same design as Entry */}
-              <section aria-label="Camping options" className="mb-8">
+              <section ref={campingRef} aria-label="Camping options" className="mb-8 scroll-mt-[150px]">
                 <ZoneCarouselRow
                   title="Camping"
                   description="Fica alojado perto do recinto. Opções com ou sem tenda incluída."
@@ -530,7 +568,7 @@ export default function App() {
               </section>
 
               {/* Row 3: F&B – Food & Beverage */}
-              <section aria-label="Food and Beverage options" className="mb-8">
+              <section ref={fbRef} aria-label="Food and Beverage options" className="mb-8 scroll-mt-[150px]">
                 <ZoneCarouselRow
                   title="Food & Beverage"
                   description="Compra já a tua comida e bebida para evitar filas no recinto."
@@ -544,7 +582,7 @@ export default function App() {
             </div>
 
             {/* Ticket selector: synced with card quantities */}
-            <div className="lg:w-[412px] flex-shrink-0 lg:sticky lg:top-[100px] self-start">
+            <div className="lg:w-[412px] flex-shrink-0 lg:sticky lg:top-[160px] self-start">
               <div ref={selectorRef} className="lg:hidden mt-[32px]">
                 <TicketSelector
                   selectedZone={selectedZone}
