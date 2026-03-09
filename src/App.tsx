@@ -98,7 +98,55 @@ const CAMPING_ZONES: ZoneData[] = [
   },
 ];
 
-const ALL_ZONES = [...ENTRY_ZONES, ...CAMPING_ZONES];
+// F&B - Food & Beverage
+const FB_ZONES: ZoneData[] = [
+  {
+    id: 'fb-beer-pack',
+    name: 'Pack 5 Cervejas',
+    shortName: '5 Cervejas',
+    price: 20,
+    capacity: 1,
+    description: 'Pack de 5 cervejas imperiais para refrescar o teu dia.',
+    features: ['5 Cervejas 25cl', 'Fila rápida', 'Levantamento no recinto'],
+    color: '#f59e0b',
+    image: 'https://images.unsplash.com/photo-1535958636474-b021ee887b13?auto=format&fit=crop&w=800&h=500&q=80',
+  },
+  {
+    id: 'fb-burger-menu',
+    name: 'Menu Hambúrguer',
+    shortName: 'Menu Burger',
+    price: 15,
+    capacity: 1,
+    description: 'Hambúrguer artesanal com batatas fritas e bebida.',
+    features: ['Hambúrguer de Novilho', 'Batatas Fritas', 'Bebida à escolha'],
+    color: '#d97706',
+    image: 'https://images.pexels.com/photos/1639557/pexels-photo-1639557.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
+  },
+  {
+    id: 'fb-pizza-menu',
+    name: 'Menu Pizza',
+    shortName: 'Menu Pizza',
+    price: 14,
+    capacity: 1,
+    description: 'Pizza individual com bebida incluída.',
+    features: ['Pizza Margherita ou Pepperoni', 'Bebida à escolha', 'Sobremesa'],
+    color: '#b45309',
+    image: 'https://images.pexels.com/photos/803290/pexels-photo-803290.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
+  },
+  {
+    id: 'fb-cocktail-pack',
+    name: 'Pack 3 Cocktails',
+    shortName: '3 Cocktails',
+    price: 25,
+    capacity: 1,
+    description: 'Pack de 3 cocktails à escolha nos bares aderentes.',
+    features: ['Gin, Vodka ou Rum', 'Fila rápida bares VIP', 'Copo reutilizável incluído'],
+    color: '#78350f',
+    image: 'https://images.pexels.com/photos/613037/pexels-photo-613037.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop',
+  },
+];
+
+const ALL_ZONES = [...ENTRY_ZONES, ...CAMPING_ZONES, ...FB_ZONES];
 
 // ============================================
 // COMPONENTS
@@ -279,12 +327,11 @@ function TicketSelectorRow({
 }
 
 function TicketSelector({
-  selectedZone,
   onZoneSelect,
   quantities,
   onQuantityChange,
 }: {
-  selectedZone: string;
+  selectedZone: string; // Keeping type to avoid changing all calls below easily but we can just use _selectedZone
   onZoneSelect: (id: string) => void;
   quantities: Record<string, number>;
   onQuantityChange: (zoneId: string, delta: number) => void;
@@ -294,7 +341,7 @@ function TicketSelector({
     name: z.name,
     price: z.price,
     subtitle: z.capacity === 1 ? 'Por pessoa' : `Para ${z.capacity} pessoas`,
-  }));
+  })).filter(t => (quantities[t.id] ?? 0) > 0);
 
   return (
     <div
@@ -319,23 +366,29 @@ function TicketSelector({
           <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
         <span style={{ fontSize: 20, lineHeight: '28px', fontWeight: 600, color: colors.textDark }}>
-          Escolhe a data e o tipo de bilhete
+          Os teus bilhetes
         </span>
       </div>
 
       {/* All tickets: each row has name, price, + quantity − */}
       <div className="flex flex-col">
-        {tickets.map((ticket, i) => (
-          <TicketSelectorRow
-            key={ticket.id}
-            ticket={ticket}
-            isSelected={false}
-            quantity={quantities[ticket.id] ?? 0}
-            onSelect={() => onZoneSelect(ticket.id)}
-            onQuantityChange={(d) => onQuantityChange(ticket.id, d)}
-            isLast={i === tickets.length - 1}
-          />
-        ))}
+        {tickets.length > 0 ? (
+          tickets.map((ticket, i) => (
+            <TicketSelectorRow
+              key={ticket.id}
+              ticket={ticket}
+              isSelected={false}
+              quantity={quantities[ticket.id] ?? 0}
+              onSelect={() => onZoneSelect(ticket.id)}
+              onQuantityChange={(d) => onQuantityChange(ticket.id, d)}
+              isLast={i === tickets.length - 1}
+            />
+          ))
+        ) : (
+          <div style={{ padding: spacing.lg, textAlign: 'center', color: colors.textMuted }}>
+            Ainda não selecionaste nenhum bilhete.
+          </div>
+        )}
       </div>
 
       <div style={{ padding: spacing.lg, borderTop: `1px solid ${colors.border}` }}>
@@ -347,6 +400,7 @@ function TicketSelector({
 
 function ZoneCarouselRow({
   title,
+  description,
   zones,
   selectedZone,
   onZoneSelect,
@@ -354,6 +408,7 @@ function ZoneCarouselRow({
   onQuantityChange,
 }: {
   title: string;
+  description?: string;
   zones: ZoneData[];
   selectedZone: string;
   onZoneSelect: (id: string) => void;
@@ -363,16 +418,6 @@ function ZoneCarouselRow({
   const selectedIndex = zones.findIndex((z) => z.id === selectedZone);
   const displayIndex = selectedIndex >= 0 ? selectedIndex : 0;
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const goToNext = () => {
-    const nextIndex = (displayIndex + 1) % zones.length;
-    onZoneSelect(zones[nextIndex].id);
-  };
-
-  const goToPrev = () => {
-    const prevIndex = (displayIndex - 1 + zones.length) % zones.length;
-    onZoneSelect(zones[prevIndex].id);
-  };
 
   return (
     <section className="flex flex-col gap-[1rem] flex-shrink-0">
@@ -384,21 +429,22 @@ function ZoneCarouselRow({
           {displayIndex + 1} / {zones.length}
         </span>
       </div>
+      {description && (
+        <p style={{ fontSize: '0.875rem', color: colors.textMuted, marginTop: '-0.5rem' }}>
+          {description}
+        </p>
+      )}
 
       <div
         ref={scrollRef}
-        className="flex gap-[0.75rem] overflow-x-auto scrollbar-hide pb-2 md:grid md:grid-cols-3 md:overflow-visible min-h-[320px]"
+        className="flex gap-[0.75rem] overflow-x-auto scrollbar-hide pb-4 min-h-[320px]"
         style={{ scrollSnapType: 'x mandatory' }}
       >
         {zones.map((zone) => (
           <ZoneCard
             key={zone.id}
             zone={zone}
-            isSelected={zone.id === selectedZone}
             onClick={() => onZoneSelect(zone.id)}
-            showNavigationArrows={zone.id === selectedZone}
-            onPrev={goToPrev}
-            onNext={goToNext}
             quantity={quantities[zone.id] ?? 0}
             onQuantityChange={(d) => onQuantityChange(zone.id, d)}
           />
@@ -455,12 +501,13 @@ export default function App() {
           <p style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '8px' }}>
             Local: fever-festival-ticket-cards — selector has +/− and quantity on each row.
           </p>
-          <div className="flex flex-col lg:flex-row gap-[32px]">
-            <div className="flex-1 min-w-0">
+          <div className="flex flex-col lg:flex-row gap-[32px] lg:items-start">
+            <div className="flex-1 min-w-0 overflow-hidden">
               {/* Row 1: Entry ticket */}
               <section aria-label="Entry ticket options" className="mb-8">
                 <ZoneCarouselRow
                   title="Entry ticket"
+                  description="Escolhe o dia que preferes ou compra um passe para todo o festival."
                   zones={ENTRY_ZONES}
                   selectedZone={selectedZone}
                   onZoneSelect={handleZoneSelect}
@@ -473,7 +520,21 @@ export default function App() {
               <section aria-label="Camping options" className="mb-8">
                 <ZoneCarouselRow
                   title="Camping"
+                  description="Fica alojado perto do recinto. Opções com ou sem tenda incluída."
                   zones={CAMPING_ZONES}
+                  selectedZone={selectedZone}
+                  onZoneSelect={handleZoneSelect}
+                  quantities={quantities}
+                  onQuantityChange={handleQuantityChange}
+                />
+              </section>
+
+              {/* Row 3: F&B – Food & Beverage */}
+              <section aria-label="Food and Beverage options" className="mb-8">
+                <ZoneCarouselRow
+                  title="Food & Beverage"
+                  description="Compra já a tua comida e bebida para evitar filas no recinto."
+                  zones={FB_ZONES}
                   selectedZone={selectedZone}
                   onZoneSelect={handleZoneSelect}
                   quantities={quantities}
@@ -483,7 +544,7 @@ export default function App() {
             </div>
 
             {/* Ticket selector: synced with card quantities */}
-            <div className="lg:w-[412px] flex-shrink-0">
+            <div className="lg:w-[412px] flex-shrink-0 lg:sticky lg:top-[100px] self-start">
               <div ref={selectorRef} className="lg:hidden mt-[32px]">
                 <TicketSelector
                   selectedZone={selectedZone}
@@ -492,7 +553,7 @@ export default function App() {
                   onQuantityChange={handleQuantityChange}
                 />
               </div>
-              <div className="hidden lg:block sticky top-[80px]">
+              <div className="hidden lg:block">
                 <TicketSelector
                   selectedZone={selectedZone}
                   onZoneSelect={handleSelectorZoneSelect}
@@ -522,11 +583,13 @@ export default function App() {
         </div>
       </main>
 
-      <StickyButton
-        label="Seleccionar entradas"
-        price={totalPrice}
-        onClick={scrollToSelector}
-      />
+      {totalPrice > 0 && (
+        <StickyButton
+          label="Seleccionar entradas"
+          price={totalPrice}
+          onClick={scrollToSelector}
+        />
+      )}
     </div>
   );
 }

@@ -4,28 +4,20 @@ import { QuantitySelector } from './QuantitySelector';
 
 interface ZoneCardProps {
   zone: ZoneData;
-  isSelected: boolean;
   onClick: () => void;
-  showNavigationArrows?: boolean;
-  onPrev?: () => void;
-  onNext?: () => void;
   quantity?: number;
   onQuantityChange?: (delta: number) => void;
 }
 
 export function ZoneCard({
   zone,
-  isSelected,
   onClick,
-  showNavigationArrows = false,
-  onPrev,
-  onNext,
   quantity,
   onQuantityChange,
 }: ZoneCardProps) {
   return (
     <div
-      className="flex-shrink-0 flex flex-col cursor-pointer w-[calc(100%-4rem)] md:w-full"
+      className="flex-shrink-0 flex flex-col cursor-pointer w-[calc(100%-4rem)] md:w-[260px]"
       style={{
         fontFamily: fonts.body,
         backgroundColor: colors.white,
