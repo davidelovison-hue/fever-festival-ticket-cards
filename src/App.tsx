@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   StickyButton,
   ZoneCard,
@@ -346,9 +346,8 @@ function TicketSelector({
 
   return (
     <div
-      className="flex flex-col w-full bg-white overflow-hidden"
+      className="flex flex-col w-full max-w-full lg:max-w-[412px] bg-white overflow-hidden"
       style={{
-        maxWidth: 412,
         borderRadius: radius.lg,
         boxShadow: shadows.card,
         fontFamily: fonts.body,
@@ -371,7 +370,7 @@ function TicketSelector({
         </span>
       </div>
 
-      {/* All tickets: each row has name, price, + quantity − */}
+      {/* Ticket list or empty cart state */}
       <div className="flex flex-col">
         {tickets.length > 0 ? (
           tickets.map((ticket, i) => (
@@ -386,8 +385,33 @@ function TicketSelector({
             />
           ))
         ) : (
-          <div style={{ padding: spacing.lg, textAlign: 'center', color: colors.textMuted }}>
-            Ainda não selecionaste nenhum bilhete.
+          <div
+            className="flex flex-col items-center justify-center"
+            style={{
+              padding: spacing.xxl,
+              minHeight: 200,
+              textAlign: 'center',
+            }}
+          >
+            <div
+              className="flex items-center justify-center rounded-full flex-shrink-0"
+              style={{
+                width: 64,
+                height: 64,
+                backgroundColor: colors.primaryLight,
+                marginBottom: spacing.lg,
+              }}
+            >
+              <svg width={32} height={32} style={{ color: colors.primary }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </div>
+            <p style={{ fontSize: '1rem', fontWeight: 600, color: colors.textDark, margin: 0, marginBottom: spacing.sm }}>
+              O teu cesto está vazio
+            </p>
+            <p style={{ fontSize: '0.875rem', lineHeight: 1.4, color: colors.textMuted, margin: 0, maxWidth: 260 }}>
+              Escolhe bilhetes nas secções abaixo e adiciona as quantidades que precisas. Aparecerão aqui.
+            </p>
           </div>
         )}
       </div>
@@ -479,6 +503,32 @@ export default function App() {
   const fbRef = useRef<HTMLElement>(null);
   const [activeTab, setActiveTab] = useState('entry');
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 200; // offset for the sticky header
+
+      const getTop = (ref: React.RefObject<HTMLElement | null>) => {
+        if (!ref.current) return 0;
+        return ref.current.getBoundingClientRect().top + window.scrollY;
+      };
+
+      const entryTop = getTop(entryRef);
+      const campingTop = getTop(campingRef);
+      const fbTop = getTop(fbRef);
+
+      if (fbTop > 0 && scrollPosition >= fbTop) {
+        setActiveTab('fb');
+      } else if (campingTop > 0 && scrollPosition >= campingTop) {
+        setActiveTab('camping');
+      } else if (entryTop > 0 && scrollPosition >= entryTop) {
+        setActiveTab('entry');
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const scrollToSection = (ref: React.RefObject<HTMLElement | null>, tabId: string) => {
     setActiveTab(tabId);
     if (ref.current) {
@@ -509,28 +559,25 @@ export default function App() {
       
       <Navbar />
       
-      <main className="pt-[62px] pb-[80px] lg:pb-0 min-h-screen">
+      <main className="pt-[62px] pb-[80px] lg:pb-0 min-h-screen overflow-x-hidden">
         <HeroSection />
         
         {/* Category Tabs */}
-        <div className="sticky top-[62px] z-40 bg-white border-b border-gray-200 shadow-sm" style={{ borderColor: colors.border }}>
+        <div className="sticky top-[62px] z-40 bg-white border-b shadow-sm" style={{ borderColor: colors.border }}>
           <div className="max-w-[1280px] mx-auto px-[16px] md:px-[32px] py-[16px]">
-            <div className="flex gap-[12px] overflow-x-auto scrollbar-hide">
-              <TabButton 
-                label="Entry ticket" 
-                isActive={activeTab === 'entry'} 
-                onClick={() => scrollToSection(entryRef, 'entry')} 
-              />
-              <TabButton 
-                label="Camping" 
-                isActive={activeTab === 'camping'} 
-                onClick={() => scrollToSection(campingRef, 'camping')} 
-              />
-              <TabButton 
-                label="Food & Beverage" 
-                isActive={activeTab === 'fb'} 
-                onClick={() => scrollToSection(fbRef, 'fb')} 
-              />
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { id: 'entry', title: 'Entry ticket', ref: entryRef },
+                { id: 'camping', title: 'Camping', ref: campingRef },
+                { id: 'fb', title: 'F&B', ref: fbRef },
+              ].map((step) => (
+                <TabButton
+                  key={step.id}
+                  label={step.title}
+                  isActive={activeTab === step.id}
+                  onClick={() => scrollToSection(step.ref, step.id)}
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -567,10 +614,10 @@ export default function App() {
                 />
               </section>
 
-              {/* Row 3: F&B – Food & Beverage */}
-              <section ref={fbRef} aria-label="Food and Beverage options" className="mb-8 scroll-mt-[150px]">
+              {/* Row 3: F&B */}
+              <section ref={fbRef} aria-label="F&B options" className="mb-8 scroll-mt-[150px]">
                 <ZoneCarouselRow
-                  title="Food & Beverage"
+                  title="F&B"
                   description="Compra já a tua comida e bebida para evitar filas no recinto."
                   zones={FB_ZONES}
                   selectedZone={selectedZone}
@@ -581,8 +628,8 @@ export default function App() {
               </section>
             </div>
 
-            {/* Ticket selector: synced with card quantities */}
-            <div className="lg:w-[412px] flex-shrink-0 lg:sticky lg:top-[160px] self-start">
+            {/* Ticket selector: full width with side spacing on mobile, fixed on desktop */}
+            <div className="lg:w-[412px] flex-shrink-0 lg:sticky lg:top-[160px] lg:self-start w-screen max-w-none relative left-1/2 -translate-x-1/2 lg:left-auto lg:translate-x-0 lg:w-[412px] lg:max-w-[412px] px-4 lg:px-0">
               <div ref={selectorRef} className="lg:hidden mt-[32px]">
                 <TicketSelector
                   selectedZone={selectedZone}
@@ -598,23 +645,23 @@ export default function App() {
                   quantities={quantities}
                   onQuantityChange={handleQuantityChange}
                 />
-                <div className="mt-4">
-                  <button
-                    className="w-full h-[48px] flex items-center justify-center transition-opacity hover:opacity-90"
-                    style={{
-                      background: colors.primary,
-                      borderRadius: '9999px',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <span className="text-white text-[16px] font-semibold">
-                      {totalPrice > 0 
-                        ? `${totalPrice.toFixed(2).replace('.', ',')} € — Comprar ahora` 
-                        : 'Seleccionar entradas'}
-                    </span>
-                  </button>
-                </div>
+                {totalPrice > 0 && (
+                  <div className="mt-4">
+                    <button
+                      className="w-full h-[48px] flex items-center justify-center transition-opacity hover:opacity-90"
+                      style={{
+                        background: colors.primary,
+                        borderRadius: '9999px',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <span className="text-white text-[16px] font-semibold">
+                        {totalPrice.toFixed(2).replace('.', ',')} € — Comprar ahora
+                      </span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
