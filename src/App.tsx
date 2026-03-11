@@ -554,15 +554,15 @@ export default function App() {
   const handleSelectorZoneSelect = (id: string) => setSelectedZone(id);
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden" style={{ fontFamily: fonts.body }}>
+    <div className="min-h-screen bg-white overflow-x-clip" style={{ fontFamily: fonts.body }}>
       <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Muli:wght@400;600;700&display=swap" rel="stylesheet" />
       
       <Navbar />
       
       <main className="pt-[62px] pb-[80px] lg:pb-0 min-h-screen">
         <HeroSection />
-        
-        {/* Category Tabs — sticky on both mobile and desktop */}
+
+        {/* Category Tabs — sticky below the hero so it sticks under the navbar when you scroll */}
         <div className="sticky top-[62px] z-40 bg-white border-b shadow-sm" style={{ borderColor: colors.border }}>
           <div className="max-w-[1280px] mx-auto px-[16px] md:px-[32px] py-[16px]">
             <div className="flex flex-wrap items-center gap-2">
